@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.industry_radar_page import render_industry_radar_page
+from src.industry_research_agent import render_research_agent_page
 from src.industry_trend_page import render_industry_trend_search_page, render_language_picker
 
 
@@ -15,22 +16,24 @@ st.set_page_config(
 
 
 def main() -> None:
-    """Render only the standalone industry trend search page."""
+    """Render the standalone industry research views."""
 
     lang = render_language_picker()
     labels = {
-        "zh": ("单行业搜索", "行业雷达总览"),
-        "en": ("Single Industry Search", "Industry Radar Overview"),
+        "zh": ("单行业搜索", "行业雷达总览", "V5.1 研究 Agent"),
+        "en": ("Single Industry Search", "Industry Radar Overview", "V5.1 Research Agent"),
     }
-    search_label, radar_label = labels[lang]
+    search_label, radar_label, research_label = labels[lang]
     selected_view = st.radio(
         "View",
-        [search_label, radar_label],
+        [search_label, radar_label, research_label],
         horizontal=True,
         label_visibility="collapsed",
     )
     if selected_view == radar_label:
         render_industry_radar_page(lang)
+    elif selected_view == research_label:
+        render_research_agent_page(lang)
     else:
         render_industry_trend_search_page(lang=lang, show_language_picker=False)
 
