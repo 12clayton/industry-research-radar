@@ -1,0 +1,10 @@
+﻿.env
+*.env
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+data/**/*.csv
+data/**/*.json
+reports/
+logs/
+backups/
