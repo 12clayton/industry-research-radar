@@ -296,7 +296,7 @@ def render_research_agent_page(lang: str | None = None) -> None:
     market_result = get_market_confirmation_data(industry_id)
     catalyst = get_effective_catalyst_framework(industry_id)
     live_news = read_industry_news(industry_id)
-    summary = build_research_summary(industry, market_result, catalyst, live_news)
+    summary = localize_research_summary(build_research_summary(industry, market_result, catalyst, live_news), lang)
     if not summary["covered"]:
         st.info(text["not_covered"])
         return
@@ -557,10 +557,65 @@ def _market_price_score(industry: dict[str, Any], market_result: dict[str, Any])
     return _to_float(industry.get("marketConfirmation"))
 
 
+def localize_research_summary(summary: dict[str, Any], lang: str) -> dict[str, Any]:
+    """Return a display-only localized copy of a research summary."""
+
+    if lang != "zh":
+        return summary
+    localized = dict(summary)
+    localized["trend_health"] = _localize_payload(summary.get("trend_health"))
+    localized["price_news_resonance"] = _localize_payload(summary.get("price_news_resonance"))
+    localized["current_catalyst_mainline"] = normalize_research_display_text(
+        summary.get("current_catalyst_mainline"), lang
+    )
+    localized["risk_signals"] = [
+        normalize_research_display_text(item, lang) for item in summary.get("risk_signals", [])
+    ]
+    localized["pending_questions"] = [
+        normalize_research_display_text(item, lang) for item in summary.get("pending_questions", [])
+    ]
+    update = dict(summary.get("suggest_framework_update") or {})
+    update["reason"] = normalize_research_display_text(update.get("reason"), lang)
+    localized["suggest_framework_update"] = update
+    return localized
+
+
+def _localize_payload(payload: object) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    localized = dict(payload)
+    for key in ("label", "label_zh", "note"):
+        if key in localized:
+            localized[key] = normalize_research_display_text(localized[key], "zh")
+    return localized
+
+
+def translate_research_label(value: object, lang: str = "zh") -> str:
+    return normalize_research_display_text(value, lang)
+
+
+def normalize_research_display_text(value: object, lang: str = "zh") -> str:
+    text = fix_mojibake_text(value).strip()
+    if lang != "zh" or not text:
+        return text
+    if text in ZH_TEXT_MAP:
+        return fix_mojibake_text(ZH_TEXT_MAP[text])
+    dynamic_text = _localized_text(text, lang)
+    if dynamic_text != text:
+        return fix_mojibake_text(dynamic_text)
+    translated = text
+    for source, target in sorted(ZH_TEXT_MAP.items(), key=lambda item: len(item[0]), reverse=True):
+        translated = translated.replace(source, fix_mojibake_text(target))
+    if translated != text:
+        return fix_mojibake_text(translated)
+    return fix_mojibake_text(text)
+
+
 def _localized_value(payload: dict[str, Any], lang: str) -> str:
     label = payload.get("label_zh") if lang == "zh" else payload.get("label")
     score = payload.get("score")
-    return f"{label} ({score:.1f})" if isinstance(score, float) else str(label or "")
+    display_label = fix_mojibake_text(label)
+    return f"{display_label} ({score:.1f})" if isinstance(score, float) else str(display_label or "")
 
 
 def _render_bullets(items: list[str], empty_text: str) -> None:
@@ -568,7 +623,7 @@ def _render_bullets(items: list[str], empty_text: str) -> None:
         st.markdown(f"- {empty_text}")
         return
     for item in items:
-        st.markdown(f"- {item}")
+        st.markdown(f"- {fix_mojibake_text(item)}")
 
 
 def _mainline_items(value: object, lang: str) -> list[str]:
@@ -584,15 +639,68 @@ def _mainline_items(value: object, lang: str) -> list[str]:
 
 
 def _localized_items(items: list[str], lang: str) -> list[str]:
-    return [_localized_text(item, lang) for item in items if str(item).strip()]
+    return [normalize_research_display_text(item, lang) for item in items if str(item).strip()]
+
+
+def fix_mojibake_text(value: object) -> str:
+    """Repair common UTF-8 text that was accidentally decoded as Latin-1/CP1252."""
+
+    text = str(value or "")
+    if not text or not _looks_like_mojibake(text):
+        return text
+
+    candidates = []
+    original_score = _mojibake_score(text)
+    for encoding in ("latin1", "cp1252"):
+        try:
+            repaired = text.encode(encoding).decode("utf-8")
+        except UnicodeError:
+            continue
+        if _mojibake_score(repaired) < original_score:
+            candidates.append(repaired)
+
+    if not candidates:
+        return text
+    return min(candidates, key=_mojibake_score)
+
+
+def _looks_like_mojibake(text: str) -> bool:
+    markers = (
+        "\u00c3",
+        "\u00c2",
+        "\u00e3\u20ac",
+        "\u00e5",
+        "\u00e6",
+        "\u00e7",
+        "\u00ef\u00bc",
+        "\u00e9\u00aa",
+        "\u00e8\u00af",
+    )
+    return any(marker in text for marker in markers)
+
+
+def _mojibake_score(text: str) -> int:
+    markers = (
+        "\u00c3",
+        "\u00c2",
+        "\u00e3\u20ac",
+        "\u00e5",
+        "\u00e6",
+        "\u00e7",
+        "\u00ef\u00bc",
+        "\u00e9\u00aa",
+        "\u00e8\u00af",
+        "\ufffd",
+    )
+    return sum(text.count(marker) for marker in markers)
 
 
 def _localized_text(value: object, lang: str) -> str:
-    text = str(value or "").strip()
+    text = fix_mojibake_text(value).strip()
     if lang != "zh" or not text:
         return text
     if text in ZH_TEXT_MAP:
-        return ZH_TEXT_MAP[text]
+        return fix_mojibake_text(ZH_TEXT_MAP[text])
     if ". Research axis: " in text:
         note, axis = text.split(". Research axis: ", maxsplit=1)
         axis = axis.removesuffix(".")
@@ -614,16 +722,16 @@ def _localized_text(value: object, lang: str) -> str:
         industry_id = text.split(" already has", maxsplit=1)[0]
         label = INDUSTRY_LABELS.get(industry_id, {}).get("zh", industry_id)
         return f"{label} 已有可用的本地催化框架；当前证据尚不足以支持人工更新，只需继续跟踪核心催化线。不会自动修改框架。"
-    return text
+    return fix_mojibake_text(text)
 
 
 def _localized_trigger_text(text: str) -> str:
-    parts = [part.strip() for part in text.split(",") if part.strip()]
+    parts = [fix_mojibake_text(part).strip() for part in text.split(",") if part.strip()]
     return "、".join(_localized_text(part, "zh") for part in parts) or "核心催化线"
 
 
 ZH_TEXT_MAP = {
-    "AI compute demand is still supportive, but the healthier read depends on whether HBM, advanced packaging, foundry, and equipment breadth move together.": "AI 算力需求仍有支撑，但趋势健康度取决于 HBM、先进封装、晶圆代工和设备链条能否同步扩散。",
+    "AI compute demand is still supportive, but the healthier read depends on whether HBM, advanced packaging, foundry, and equipment breadth move together.": "AI 算力需求仍有支撑，但趋势健康度取决于 HBM、先进封装、晶圆代工、设备产能等环节能否同步确认。",
     "The key split is between high-end HBM demand and the broader DRAM / NAND cycle; trend quality improves only when pricing and inventory validation broaden.": "核心分歧在高端 HBM 需求与更广泛 DRAM / NAND 周期之间；只有价格和库存验证扩散，趋势质量才会改善。",
     "Trend quality depends on whether AI data-center bandwidth upgrades translate into product-route validation beyond a few optical leaders.": "趋势质量取决于 AI 数据中心带宽升级能否从少数光模块龙头，扩散为更广泛的产品路线验证。",
     "The industry remains strongest when GPU, server, networking, power, cooling, and cloud capex indicators reinforce one another instead of concentrating in one leader group.": "GPU、服务器、网络、电力、散热和云厂商资本开支互相验证时，AI 算力链条最健康；若只集中在少数龙头，质量会下降。",
@@ -679,6 +787,29 @@ ZH_TEXT_MAP = {
     "Short-term risk-off flow may fade if central-bank demand or rate expectations do not confirm.": "若央行需求或利率预期不能确认，短期避险资金流可能退潮。",
     "EV demand softness can offset the long-term power-semiconductor upgrade story.": "电动车需求偏弱可能抵消长期功率半导体升级逻辑。",
     "Capacity additions may pressure pricing before utilization stabilizes.": "产能扩张可能在利用率企稳前压制价格。",
+    "Valuation pressure": "估值压力",
+    "Inventory cycle reversal": "库存周期反转",
+    "Capex slowdown": "资本开支放缓",
+    "Demand weakening": "需求走弱",
+    "Price-news divergence": "价格与新闻分化",
+    "Policy uncertainty": "政策不确定性",
+    "Crowded trade": "交易拥挤",
+    "Earnings miss risk": "业绩不及预期风险",
+    "Narrative runs ahead of validation": "叙事领先于验证",
+    "Margin or pricing divergence": "利润率或价格分化",
+    "Macro conditions reduce visibility": "宏观环境降低可见度",
+    "Weak market confirmation": "市场确认偏弱",
+    "Limited fundamental validation": "基本面验证不足",
+    "Elevated valuation pressure": "估值压力上升",
+    "Memory price pullback": "存储价格回落",
+    "Overly rapid capex expansion": "资本开支扩张过快",
+    "AI server demand below expectations": "AI 服务器需求低于预期",
+    "Margin pressure from stronger competition": "竞争加剧导致利润率压力",
+    "Wholesale price decline": "批价下行",
+    "Rising channel inventory": "渠道库存升高",
+    "Weaker-than-expected consumption recovery": "消费修复不及预期",
+    "Marketing expense pressure": "费用投放压力",
+    "Policy or business-consumption constraints": "政策或商务消费约束",
     "Market-price confirmation is weak relative to the framework.": "市场价格确认弱于行业框架。",
     "Representative ticker breadth is weak below MA50.": "代表性标的站上 MA50 的广度偏弱。",
     "Valuation / expectation pressure is elevated.": "估值或预期压力偏高。",
