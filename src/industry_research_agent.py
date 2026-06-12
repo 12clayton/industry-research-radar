@@ -84,6 +84,16 @@ RESEARCH_AGENT_TEXT = {
     },
 }
 
+RESONANCE_NOTE_ZH = {
+    "aligned": "价格确认与催化热度均较强，并且有中高相关度缓存新闻作为证据支持。",
+    "framework_price_aligned": "价格确认与催化热度方向一致，但缓存新闻证据有限。",
+    "news_leads_price": "催化热度较强，但价格走势尚未充分确认。",
+    "price_leads_news": "价格确认强于新闻确认。",
+    "news_only": "催化框架信号较强，但市场价格确认暂不可完整验证。",
+    "noisy_news": "缓存新闻噪音较多，高相关证据不足。",
+    "mixed": "价格确认、催化热度与缓存新闻尚未形成同一方向的共振信号。",
+}
+
 INDUSTRY_RESEARCH_PROFILES = {
     "semiconductor": {
         "health_focus": "AI compute demand is still supportive, but the healthier read depends on whether HBM, advanced packaging, foundry, and equipment breadth move together.",
@@ -311,9 +321,9 @@ def render_research_agent_page(lang: str | None = None) -> None:
         st.metric(text["framework_update"], text["update_yes"] if update["recommended"] else text["update_no"])
 
     st.markdown(f"**{text['health_note']}**")
-    st.write(_localized_text(summary["trend_health"].get("note") or text["none"], lang))
+    st.write(normalize_research_display_text(summary["trend_health"].get("note") or text["none"], lang))
     st.markdown(f"**{text['resonance_note']}**")
-    st.write(_localized_text(summary["price_news_resonance"].get("note") or text["none"], lang))
+    st.write(normalize_research_display_text(summary["price_news_resonance"].get("note") or text["none"], lang))
     st.markdown(f"**{text['current_catalyst_mainline']}**")
     _render_bullets(_mainline_items(summary["current_catalyst_mainline"], lang), text["none"])
     st.markdown(f"**{text['risk_signals']}**")
@@ -321,7 +331,7 @@ def render_research_agent_page(lang: str | None = None) -> None:
     st.markdown(f"**{text['pending_questions']}**")
     _render_bullets(_localized_items(summary["pending_questions"], lang), text["none"])
     st.markdown(f"**{text['reason']}**")
-    st.write(_localized_text(update["reason"], lang))
+    st.write(normalize_research_display_text(update["reason"], lang))
 
     with st.expander(text["evidence"], expanded=False):
         st.dataframe(pd.DataFrame([summary["evidence"]]), width="stretch", hide_index=True)
@@ -562,6 +572,7 @@ def localize_research_summary(summary: dict[str, Any], lang: str) -> dict[str, A
 
     if lang != "zh":
         return summary
+    # Final display pass covers health_note, resonance_note, risk_signals, validation questions, and research_axis.
     localized = dict(summary)
     localized["trend_health"] = _localize_payload(summary.get("trend_health"))
     localized["price_news_resonance"] = _localize_payload(summary.get("price_news_resonance"))
@@ -584,14 +595,36 @@ def _localize_payload(payload: object) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {}
     localized = dict(payload)
+    if localized.get("status") in RESONANCE_NOTE_ZH:
+        localized["note"] = _localized_resonance_note(localized)
+        return localized
     for key in ("label", "label_zh", "note"):
         if key in localized:
             localized[key] = normalize_research_display_text(localized[key], "zh")
     return localized
 
 
+def _localized_resonance_note(payload: dict[str, Any]) -> str:
+    note = RESONANCE_NOTE_ZH.get(str(payload.get("status") or ""), "")
+    axis = normalize_research_axis(payload.get("research_axis"), "zh")
+    if axis:
+        return f"{note.rstrip('。')}。研究主线：{axis}。"
+    return note
+
+
 def translate_research_label(value: object, lang: str = "zh") -> str:
     return normalize_research_display_text(value, lang)
+
+
+def normalize_research_axis(value: object, lang: str = "zh") -> str:
+    raw = str(value or "").strip().rstrip(".")
+    if not raw:
+        return ""
+    if "->" in raw:
+        parts = raw.split("->")
+    else:
+        parts = raw.split("|")
+    return "、".join(normalize_research_display_text(part, lang).strip() for part in parts if part.strip())
 
 
 def normalize_research_display_text(value: object, lang: str = "zh") -> str:
@@ -600,6 +633,8 @@ def normalize_research_display_text(value: object, lang: str = "zh") -> str:
         return text
     if text in ZH_TEXT_MAP:
         return fix_mojibake_text(ZH_TEXT_MAP[text])
+    if f"{text}." in ZH_TEXT_MAP:
+        return fix_mojibake_text(ZH_TEXT_MAP[f"{text}."])
     dynamic_text = _localized_text(text, lang)
     if dynamic_text != text:
         return fix_mojibake_text(dynamic_text)
@@ -701,11 +736,14 @@ def _localized_text(value: object, lang: str) -> str:
         return text
     if text in ZH_TEXT_MAP:
         return fix_mojibake_text(ZH_TEXT_MAP[text])
+    if f"{text}." in ZH_TEXT_MAP:
+        return fix_mojibake_text(ZH_TEXT_MAP[f"{text}."])
     if ". Research axis: " in text:
         note, axis = text.split(". Research axis: ", maxsplit=1)
         axis = axis.removesuffix(".")
-        axis_items = "、".join(_mainline_items(axis, "zh"))
-        return f"{_localized_text(note, lang)}。研究主线：{axis_items}。"
+        axis_items = normalize_research_axis(axis, "zh")
+        note_text = _localized_text(note, lang).rstrip("。.")
+        return f"{note_text}。研究主线：{axis_items}。"
     if text.startswith("Has there been a verified change in ") and text.endswith("?"):
         trigger = text.removeprefix("Has there been a verified change in ").removesuffix("?")
         return f"是否已经验证：{_localized_text(trigger, lang)} 出现实质变化？"
@@ -744,12 +782,26 @@ ZH_TEXT_MAP = {
     "Price and catalyst heat are far enough apart to require follow-up.": "价格确认与催化热度差距较大，需要继续跟踪。",
     "Fundamental validation remains a gating issue.": "基本面验证仍是关键门槛。",
     "Price confirmation and catalyst heat are both strong, with high/medium relevance cached news evidence. Research axis: AI capex -> HBM / accelerator demand -> advanced packaging and equipment capacity -> broader chip-chain confirmation.": "价格确认和催化热度都较强，并有中高相关度缓存新闻支持。研究主线是 AI 资本开支、HBM / 加速器需求、先进封装与设备产能，以及更广泛芯片链确认。",
+    "Either price confirmation or catalyst heat is missing.": "价格确认或催化热度数据缺失，暂时无法完整判断共振。",
+    "Price confirmation and catalyst heat are both strong, with high/medium relevance cached news evidence.": "价格确认与催化热度均较强，并且有中高相关度缓存新闻作为证据支持。",
+    "Price confirmation and catalyst heat are both strong.": "价格确认与催化热度均较强。",
+    "Price confirmation is strong, but catalyst heat is not yet confirmed.": "价格确认较强，但催化热度尚未充分确认。",
+    "Catalyst heat is strong, but price confirmation is not yet strong.": "催化热度较强，但价格走势尚未充分确认。",
+    "Price confirmation and catalyst heat are weak.": "价格确认与催化热度均偏弱。",
+    "High/medium relevance cached news evidence is available.": "已有中高相关度缓存新闻证据。",
+    "Cached news evidence is limited.": "缓存新闻证据有限。",
     "Price confirmation and catalyst heat are aligned, but cached high-relevance news is limited.": "价格确认与催化热度方向一致，但高相关度缓存新闻偏少。",
     "The narrative layer is active, but price confirmation has not caught up.": "叙事层较活跃，但价格确认尚未跟上。",
     "Representative prices are stronger than the current cached news evidence.": "代表性价格强于当前缓存新闻证据。",
     "Market confirmation is not available, so resonance cannot be fully tested.": "市场确认数据不可用，因此暂时无法完整检验共振。",
     "The cache contains low-relevance items but little high-relevance evidence.": "缓存中低相关内容较多，高相关证据不足。",
-    "Price, catalyst heat, and cached news are not yet moving as one signal.": "价格、催化热度和缓存新闻尚未形成同一方向信号。",
+    "Price, catalyst heat, and cached news are not yet moving as one signal.": "价格确认、催化热度与缓存新闻尚未形成同一方向的共振信号。",
+    "Price, catalyst heat, and cached news are moving as one signal.": "价格确认、催化热度与缓存新闻正在形成同向共振。",
+    "Price and news are diverging.": "价格走势与新闻催化出现分化。",
+    "Cached news support is thin.": "缓存新闻支持力度较弱。",
+    "Catalyst heat is not yet confirmed by price.": "催化热度尚未得到价格走势确认。",
+    "Price confirmation is stronger than news confirmation.": "价格确认强于新闻确认。",
+    "News confirmation is stronger than price confirmation.": "新闻确认强于价格确认。",
     "AI capex": "AI 资本开支",
     "HBM / accelerator demand": "HBM / 加速器需求",
     "advanced packaging and equipment capacity": "先进封装与设备产能",
@@ -883,9 +935,11 @@ def _resonance_payload(
     profile: dict[str, Any],
 ) -> dict[str, str]:
     mainline = str(profile.get("catalyst_mainline") or "")
+    payload = {"status": status, "label": label, "label_zh": label_zh, "note": note, "research_axis": mainline}
     if mainline:
         note = f"{note} Research axis: {mainline}."
-    return {"status": status, "label": label, "label_zh": label_zh, "note": note}
+        payload["note"] = note
+    return payload
 
 
 def _to_float(value: object) -> float | None:
