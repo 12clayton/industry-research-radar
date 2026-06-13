@@ -39,8 +39,25 @@ INDUSTRY_LABELS = {
 
 RESEARCH_AGENT_TEXT = {
     "zh": {
-        "view_title": "V5.1.1 Research Agent \u672c\u5730\u89c4\u5219\u7248",
-        "view_subtitle": "\u57fa\u4e8e\u73b0\u6709\u884c\u4e1a\u6846\u67b6\u3001\u4ef7\u683c\u786e\u8ba4\u3001\u50ac\u5316\u6846\u67b6\u548c\u7f13\u5b58\u65b0\u95fb\u505a\u672c\u5730\u89c4\u5219\u6c47\u603b\u3002\u4e0d\u63a5 OpenAI API\uff0c\u4e0d\u7ed9\u4ea4\u6613\u6307\u4ee4\uff0c\u4e0d\u81ea\u52a8\u4fee\u6539\u884c\u4e1a\u6846\u67b6\u3002",
+        "view_title": "V5.1 本地研究摘要 / V5.2 AI 研究备忘录",
+        "view_subtitle": "V5.1 是本地规则版研究摘要生成器，用于输出系统初判；V5.2 将作为未来接入大模型的 AI 研究备忘录。",
+        "local_section_title": "V5.1 本地研究摘要",
+        "local_section_note": "该模块为本地规则版研究摘要生成器，基于趋势评分、价格确认、催化热度、缓存新闻和行业框架生成系统初判；不接入大模型，不构成投资建议，最终结论需要人工复核。",
+        "ai_section_title": "V5.2 AI 研究备忘录",
+        "ai_disabled": "AI 研究备忘录暂未启用。后续将基于 V5.1 本地摘要、高相关新闻、催化主题、风险信号和待验证问题生成供人工复核的研究备忘录。",
+        "ai_placeholder_note": "当前阶段不接 API、不读取 API key、不生成真实模型输出。",
+        "ai_placeholder_value": "暂未启用",
+        "ai_memo_fields": [
+            "核心结论",
+            "支撑证据",
+            "反方证据",
+            "关键风险",
+            "下一步验证清单",
+            "变化点",
+            "人工复核建议",
+            "置信度",
+            "免责声明",
+        ],
         "industry_selector": "\u9009\u62e9\u6838\u5fc3\u884c\u4e1a",
         "search_placeholder": "\u9009\u62e9\u6838\u5fc3\u884c\u4e1a...",
         "coverage": "\u8986\u76d6\u8303\u56f4",
@@ -51,18 +68,35 @@ RESEARCH_AGENT_TEXT = {
         "current_catalyst_mainline": "\u5f53\u524d\u50ac\u5316\u4e3b\u7ebf",
         "risk_signals": "\u98ce\u9669\u4fe1\u53f7",
         "pending_questions": "\u5f85\u9a8c\u8bc1\u95ee\u9898",
-        "framework_update": "\u662f\u5426\u5efa\u8bae\u66f4\u65b0\u884c\u4e1a\u6846\u67b6",
+        "framework_update": "人工复核建议",
         "update_yes": "\u5efa\u8bae\u4eba\u5de5\u590d\u6838",
         "update_no": "\u6682\u4e0d\u5efa\u8bae\u66f4\u65b0",
         "health_note": "\u5065\u5eb7\u5ea6\u89e3\u8bfb",
         "resonance_note": "\u5171\u632f\u89e3\u8bfb",
-        "reason": "\u7406\u7531",
+        "reason": "人工复核理由",
         "evidence": "\u672c\u5730\u8bc1\u636e",
         "none": "\u6682\u65e0",
     },
     "en": {
-        "view_title": "V5.1.1 Research Agent (Local Rules)",
-        "view_subtitle": "Rule-based local summary from framework, price, catalyst, and cached news data. No OpenAI API, no trading instruction, no automatic framework edit.",
+        "view_title": "V5.1 Local Research Summary / V5.2 AI Research Memo",
+        "view_subtitle": "V5.1 is a local rule-based summary for system pre-read. V5.2 is reserved for a future AI research memo.",
+        "local_section_title": "V5.1 Local Research Summary",
+        "local_section_note": "This module is a local rule-based research-summary generator. It uses trend scores, price confirmation, catalyst heat, cached news, and the industry framework to produce a system pre-read. It does not call an LLM, is not investment advice, and requires human review.",
+        "ai_section_title": "V5.2 AI Research Memo",
+        "ai_disabled": "AI research memo is not enabled yet. A future version will use the V5.1 local summary, high-relevance news, catalyst themes, risk signals, and validation questions to generate a memo for human review.",
+        "ai_placeholder_note": "This stage does not call any API, read any API key, or generate real model output.",
+        "ai_placeholder_value": "Not enabled",
+        "ai_memo_fields": [
+            "Core View",
+            "Supporting Evidence",
+            "Opposing Evidence",
+            "Key Risks",
+            "Next Validation Checklist",
+            "What Changed",
+            "Manual Review Suggestion",
+            "Confidence Level",
+            "Disclaimer",
+        ],
         "industry_selector": "Select core industry",
         "search_placeholder": "Search core industry or theme...",
         "coverage": "Coverage",
@@ -73,12 +107,12 @@ RESEARCH_AGENT_TEXT = {
         "current_catalyst_mainline": "Current Catalyst Mainline",
         "risk_signals": "Risk Signals",
         "pending_questions": "Pending Questions",
-        "framework_update": "Suggested Framework Update",
+        "framework_update": "Manual Review Suggestion",
         "update_yes": "Manual review suggested",
         "update_no": "No update suggested",
         "health_note": "Health Read",
         "resonance_note": "Resonance Read",
-        "reason": "Reason",
+        "reason": "Manual Review Reason",
         "evidence": "Local Evidence",
         "none": "None",
     },
@@ -311,6 +345,9 @@ def render_research_agent_page(lang: str | None = None) -> None:
         st.info(text["not_covered"])
         return
 
+    st.markdown(f"### {text['local_section_title']}")
+    st.caption(text["local_section_note"])
+
     c1, c2, c3 = st.columns(3)
     with c1:
         st.metric(text["trend_health"], _localized_value(summary["trend_health"], lang))
@@ -335,6 +372,19 @@ def render_research_agent_page(lang: str | None = None) -> None:
 
     with st.expander(text["evidence"], expanded=False):
         st.dataframe(pd.DataFrame([summary["evidence"]]), width="stretch", hide_index=True)
+
+    st.divider()
+    _render_ai_memo_placeholder(text)
+
+
+def _render_ai_memo_placeholder(text: dict[str, Any]) -> None:
+    st.markdown(f"### {text['ai_section_title']}")
+    st.info(text["ai_disabled"])
+    st.caption(text["ai_placeholder_note"])
+    placeholder = text["ai_placeholder_value"]
+    for field in text["ai_memo_fields"]:
+        st.markdown(f"**{field}**")
+        st.write(placeholder)
 
 
 def _trend_health(
@@ -543,17 +593,17 @@ def _framework_update_judgement(
     }:
         return {
             "recommended": True,
-            "reason": f"Manual review is suggested because cached evidence and rising catalyst heat may indicate a change in {trigger_text or 'the core catalyst line'}. The agent only flags this and does not apply any framework update.",
+            "reason": f"Manual review is suggested because cached evidence and rising catalyst heat may indicate a change in {trigger_text or 'the core catalyst line'}. The local summary module only flags this and does not apply any framework update.",
         }
     if price_score is not None and price_score < 4.5 and heat_direction == "Rising":
         return {
             "recommended": True,
-            "reason": "Manual review is suggested because catalyst heat is rising while market-price confirmation is weak; the framework may need a divergence note. The agent does not apply any framework update.",
+            "reason": "Manual review is suggested because catalyst heat is rising while market-price confirmation is weak; the framework may need a divergence note. The local summary module does not apply any framework update.",
         }
     if event_count < 2:
         return {
             "recommended": True,
-            "reason": "The local catalyst framework has too few events for this core industry, so a manual framework review is suggested. The agent does not apply any framework update.",
+            "reason": "The local catalyst framework has too few events for this core industry, so a manual framework review is suggested. The local summary module does not apply any framework update.",
         }
     return {
         "recommended": False,
@@ -750,12 +800,12 @@ def _localized_text(value: object, lang: str) -> str:
     if text.startswith("Manual review is suggested because cached evidence and rising catalyst heat may indicate a change in "):
         trigger = text.removeprefix(
             "Manual review is suggested because cached evidence and rising catalyst heat may indicate a change in "
-        ).removesuffix(". The agent only flags this and does not apply any framework update.")
-        return f"建议人工复核：缓存证据和上行催化热度可能指向「{_localized_trigger_text(trigger)}」变化。本 Agent 只做提示，不自动修改行业框架。"
+        ).removesuffix(". The local summary module only flags this and does not apply any framework update.")
+        return f"建议人工复核：缓存证据和上行催化热度可能指向「{_localized_trigger_text(trigger)}」变化。本地摘要模块只做提示，不自动修改行业框架。"
     if text.startswith("Manual review is suggested because catalyst heat is rising while market-price confirmation is weak"):
-        return "建议人工复核：催化热度上行，但市场价格确认偏弱，行业框架可能需要补充背离说明。本 Agent 不自动修改行业框架。"
+        return "建议人工复核：催化热度上行，但市场价格确认偏弱，行业框架可能需要补充背离说明。本地摘要模块不自动修改行业框架。"
     if text.startswith("The local catalyst framework has too few events"):
-        return "建议人工复核：该核心行业的本地催化框架事件数量偏少，需要人工检查是否补充框架。本 Agent 不自动修改行业框架。"
+        return "建议人工复核：该核心行业的本地催化框架事件数量偏少，需要人工检查是否补充框架。本地摘要模块不自动修改行业框架。"
     if " already has a usable local catalyst framework. Current evidence does not yet justify even a manual update" in text:
         industry_id = text.split(" already has", maxsplit=1)[0]
         label = INDUSTRY_LABELS.get(industry_id, {}).get("zh", industry_id)

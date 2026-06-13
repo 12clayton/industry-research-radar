@@ -20,8 +20,8 @@ def main() -> None:
 
     lang = render_language_picker()
     labels = {
-        "zh": ("单行业搜索", "行业雷达总览", "V5.1 研究 Agent"),
-        "en": ("Single Industry Search", "Industry Radar Overview", "V5.1 Research Agent"),
+        "zh": ("单行业搜索", "行业雷达总览", "研究摘要 / AI 备忘录"),
+        "en": ("Single Industry Search", "Industry Radar Overview", "Research Summary / AI Memo"),
     }
     search_label, radar_label, research_label = labels[lang]
     selected_view = st.radio(
