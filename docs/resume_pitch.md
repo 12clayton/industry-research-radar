@@ -29,6 +29,7 @@ Recommended framing:
 - V5.1 is local deterministic logic, not model output.
 - V5.2 does not call OpenAI or any LLM API; it creates a copy-ready prompt for manual ChatGPT review.
 - V5.3 makes the data basis visible by showing market, news, catalyst snapshot, and framework freshness.
+- The current Streamlit UI is a lightweight research prototype and interview demo surface. It is suitable for screenshots and workflow validation, while a later public-facing frontend could be designed separately in Figma / Next.js.
 
 ## Demo Talk Track
 
@@ -39,3 +40,9 @@ Recommended framing:
 5. Open the research summary / AI input package page.
 6. Show the V5.3 data status bar, then the V5.1 local summary.
 7. Generate the V5.2 ChatGPT research prompt and explain that this is the AI review input package, not an automatically generated investment conclusion.
+
+Recommended screenshot pages:
+
+- Industry Radar Overview: cross-industry screening and overview cards.
+- Single Industry Research: complete context, price confirmation, news catalysts, and risk signals.
+- AI Research Input Package: data status, local summary, and ChatGPT prompt export.

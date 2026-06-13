@@ -130,6 +130,7 @@ RESEARCH_AGENT_TEXT["zh"].update(
         "ai_prompt_button": "生成 ChatGPT 研究 Prompt",
         "ai_prompt_label": "ChatGPT 研究 Prompt / Markdown 输入包",
         "ai_download_label": "下载 Markdown",
+        "ai_prompt_note": "建议复制该 Prompt 到 ChatGPT 中进行进一步研究复核。系统只整理研究任务书，不调用 API，也不自动生成 AI 分析结论。",
         "workflow_note": "工作流：数据状态 → V5.1 本地研究摘要 → V5.2 ChatGPT 研究输入包。V5.1 是本地规则版摘要，不是大模型输出；V5.2 不调用 API、不自动生成结论，只生成可复制给 ChatGPT 的结构化研究 Prompt；V5.3 数据状态栏用于判断当前摘要基于什么时间的数据。",
     }
 )
@@ -142,6 +143,7 @@ RESEARCH_AGENT_TEXT["en"].update(
         "ai_prompt_button": "Generate ChatGPT Research Prompt",
         "ai_prompt_label": "ChatGPT Research Prompt / Markdown Input Package",
         "ai_download_label": "Download Markdown",
+        "ai_prompt_note": "Copy this prompt into ChatGPT for further research review. The system only prepares the research task brief; it does not call APIs or auto-generate AI conclusions.",
         "workflow_note": "Workflow: data status → V5.1 local research summary → V5.2 ChatGPT research input package. V5.1 is a local rule-based summary, not model output. V5.2 does not call APIs or auto-generate conclusions; it only creates a structured prompt for ChatGPT. V5.3 shows what data timestamp the current summary is based on.",
     }
 )
@@ -470,6 +472,7 @@ def _render_ai_prompt_package(
     prompt = build_ai_research_prompt(summary=summary, live_news=live_news, lang=lang)
     visible_key = f"ai_prompt_visible_{summary.get('industry_id')}"
     if st.session_state.get(visible_key, True):
+        st.caption(text["ai_prompt_note"])
         st.text_area(
             text["ai_prompt_label"],
             value=prompt,

@@ -268,6 +268,10 @@ RADAR_TEXT["zh"].update(
         "title": "行业雷达总览",
         "subtitle": "横向观察多个行业的趋势评分、价格确认、新闻热度、催化状态、风险等级和人工复核建议。趋势评分只是行业初筛信号，不是买入建议。",
         "load_note": "雷达页默认读取本地缓存；只有点击刷新按钮才会更新市场或新闻数据。请把这里当作行业初筛与对比入口，不要把单一分数当作投资结论。",
+        "how_to_read": "本页用于多行业横向初筛。市场价格确认分、新闻热度分、风险等级和数据状态用于判断行业是否值得进一步研究；趋势评分不是买入建议，数据状态用于判断当前结果是否需要刷新。",
+        "coverage_card": "行业覆盖数量",
+        "news_available_card": "新闻数据可用行业数",
+        "risk_watch_card": "需关注风险行业数",
     }
 )
 RADAR_TEXT["en"].update(
@@ -275,6 +279,10 @@ RADAR_TEXT["en"].update(
         "title": "Industry Radar Overview",
         "subtitle": "Compare industry trend scores, price confirmation, news heat, catalyst status, risk level, and manual-review signals. Trend scores are screening signals, not buy recommendations.",
         "load_note": "The radar page reads local cache by default. Market or news data updates only when refresh buttons are clicked. Treat this page as an industry screening view, not an investment conclusion.",
+        "how_to_read": "Use this page for cross-industry screening. Market price scores, news heat, risk levels, and data status help decide which industries deserve deeper research. Trend scores are not buy recommendations; data status helps judge whether a refresh is needed.",
+        "coverage_card": "Industries Covered",
+        "news_available_card": "Industries with News Data",
+        "risk_watch_card": "Risk Watch Industries",
     }
 )
 
@@ -288,11 +296,13 @@ def render_industry_radar_page(lang: str) -> None:
 
     st.markdown(f"## {text['title']}")
     st.caption(text["subtitle"])
+    st.info(text["how_to_read"])
 
     previous_snapshot = load_latest_snapshot_lookup(before=date.today())
     watchlist = set(load_watchlist())
     data_source = text["local_cache"]
     radar_records = build_cached_radar_records(lang, previous_snapshot)
+    render_radar_overview_cards(radar_records, text)
 
     st.caption(text["load_note"])
     if not radar_records:
@@ -344,6 +354,27 @@ def render_industry_radar_page(lang: str) -> None:
             }
         )
     st.caption(text["hint"])
+
+
+def render_radar_overview_cards(records: list[dict[str, Any]], text: dict[str, Any]) -> None:
+    """Render lightweight overview cards from already-built radar rows."""
+
+    total = len(records)
+    news_available = sum(
+        1 for record in records if (record.get("raw") or {}).get("live_news_status") == "available"
+    )
+    risk_watch = sum(
+        1
+        for record in records
+        if str((record.get("raw") or {}).get("priced_in_risk") or "").lower() in {"high", "elevated"}
+    )
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric(text["coverage_card"], total)
+    with c2:
+        st.metric(text["news_available_card"], news_available)
+    with c3:
+        st.metric(text["risk_watch_card"], risk_watch)
 
 
 def render_performance_strip(

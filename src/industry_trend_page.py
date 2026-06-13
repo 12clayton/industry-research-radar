@@ -195,6 +195,7 @@ TEXT["zh"].update(
         "page_title": "单行业研究页",
         "page_subtitle": "查看单个行业的完整研究上下文：行业阶段、价格确认、新闻催化、催化主题、风险信号和产业链信息。单行业 Markdown 是原始行业上下文 / 证据包，不是 ChatGPT Prompt。",
         "version": "AI 辅助行业研究雷达系统 · 单行业证据包",
+        "page_guide": "本页用于展开单个行业的证据链：先看行业阶段与综合判断，再看价格确认、新闻催化、风险信号和产业链。导出的单行业 Markdown 是原始上下文 / 证据包，不是 V5.2 ChatGPT Prompt。",
     }
 )
 TEXT["en"].update(
@@ -202,23 +203,24 @@ TEXT["en"].update(
         "page_title": "Single Industry Research",
         "page_subtitle": "Review one industry's full context: stage, price confirmation, news catalysts, catalyst themes, risk signals, and industry-chain information. The single-industry Markdown is a raw context/evidence package, not a ChatGPT prompt.",
         "version": "AI-Assisted Industry Research Radar · Single-Industry Evidence Package",
+        "page_guide": "Use this page to inspect one industry's evidence chain: stage and overall view first, then price confirmation, news catalysts, risk signals, and industry chain. The exported single-industry Markdown is a raw context/evidence package, not the V5.2 ChatGPT prompt.",
     }
 )
 
 STATUS_COLORS = {
-    "Strong Trend": "#22C55E",
-    "Trend Intact": "#38BDF8",
-    "Diverging": "#FBBF24",
-    "Weakening": "#F97316",
-    "Broken Trend": "#EF4444",
-    "Overheated": "#F59E0B",
-    "Strong": "#22C55E",
-    "Moderate-Strong": "#38BDF8",
-    "Moderate": "#CBD5E1",
-    "Recovering": "#A78BFA",
-    "Stable": "#94A3B8",
-    "Framework": "#CBD5E1",
-    "Emerging": "#2DD4BF",
+    "Strong Trend": "#15803D",
+    "Trend Intact": "#2563EB",
+    "Diverging": "#B45309",
+    "Weakening": "#C2410C",
+    "Broken Trend": "#B91C1C",
+    "Overheated": "#B45309",
+    "Strong": "#15803D",
+    "Moderate-Strong": "#2563EB",
+    "Moderate": "#4B5563",
+    "Recovering": "#7C3AED",
+    "Stable": "#4B5563",
+    "Framework": "#4B5563",
+    "Emerging": "#0F766E",
 }
 
 STATUS_LABELS = {
@@ -508,6 +510,7 @@ def render_industry_trend_search_page(lang: str | None = None, show_language_pic
         </div>
         """
     )
+    st.info(text["page_guide"])
 
     query = st.text_input(
         text["search_placeholder"],
@@ -2100,12 +2103,12 @@ def _apply_industry_css() -> None:
             padding-top: 2.5rem;
         }
         div[data-testid="stTextInput"] input {
-            border-color: rgba(148, 163, 184, 0.35) !important;
+            border-color: #D1D5DB !important;
             box-shadow: none !important;
         }
         div[data-testid="stTextInput"] input:focus {
-            border-color: rgba(56, 189, 248, 0.7) !important;
-            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25) !important;
+            border-color: #2563EB !important;
+            box-shadow: 0 0 0 1px #BFDBFE !important;
         }
         .industry-hero {
             display: flex;
@@ -2114,43 +2117,46 @@ def _apply_industry_css() -> None:
             gap: 16px;
             padding: 20px 20px;
             margin-bottom: 16px;
-            border: 1px solid rgba(148, 163, 184, 0.24);
-            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid #BFDBFE;
+            background: #EFF6FF;
             border-radius: 8px;
         }
         .industry-hero h1 {
             margin: 0;
             font-size: 30px;
             line-height: 1.2;
+            color: #111827;
         }
         .industry-hero p {
             margin: 6px 0 0;
-            color: #CBD5E1;
+            color: #4B5563;
         }
         .industry-version {
-            color: #38BDF8;
-            border: 1px solid rgba(56, 189, 248, 0.42);
+            color: #2563EB;
+            border: 1px solid #BFDBFE;
             border-radius: 999px;
             padding: 6px 10px;
             white-space: nowrap;
             font-size: 13px;
+            background: #FFFFFF;
         }
         .industry-panel {
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            background: rgba(15, 23, 42, 0.58);
+            border: 1px solid #D1D5DB;
+            background: #FFFFFF;
             border-radius: 8px;
             padding: 16px;
             margin: 12px 0;
         }
         .industry-panel h2, .industry-panel h3, .industry-panel h4 {
             margin-top: 0;
+            color: #111827;
         }
         .industry-panel p, .driver-row p {
-            color: #CBD5E1;
+            color: #4B5563;
             line-height: 1.5;
         }
         .industry-kicker {
-            color: #94A3B8;
+            color: #6B7280;
             font-size: 13px;
             margin-bottom: 6px;
         }
@@ -2161,7 +2167,7 @@ def _apply_industry_css() -> None:
             align-items: center;
         }
         .industry-title-sub {
-            color: #94A3B8;
+            color: #6B7280;
             font-size: 14px;
             font-weight: 500;
             margin-top: 4px;
@@ -2172,41 +2178,41 @@ def _apply_industry_css() -> None:
             padding: 5px 9px;
             font-size: 12px;
             white-space: nowrap;
-            background: rgba(15, 23, 42, 0.72);
+            background: #FFFFFF;
         }
         .summary-box, .stage-box {
             margin-top: 12px;
             padding: 12px;
-            background: rgba(15, 23, 42, 0.52);
-            border: 1px solid rgba(148, 163, 184, 0.18);
+            background: #F8FAFC;
+            border: 1px solid #E5E7EB;
             border-radius: 6px;
         }
         .stage-box {
-            background: rgba(30, 41, 59, 0.72);
-            border-left: 3px solid #38BDF8;
+            background: #EFF6FF;
+            border-left: 3px solid #2563EB;
         }
         .stage-label {
-            color: #94A3B8;
+            color: #6B7280;
             font-size: 12px;
         }
         .stage-value {
-            color: #F8FAFC;
+            color: #111827;
             font-size: 18px;
             font-weight: 700;
             margin: 3px 0;
         }
         .stage-note, .summary-text {
-            color: #CBD5E1;
+            color: #4B5563;
             line-height: 1.55;
             margin-top: 4px;
         }
         .recognition-panel, .market-meta-strip {
             margin: 10px 0 12px;
             padding: 10px 12px;
-            border: 1px solid rgba(56, 189, 248, 0.28);
-            background: rgba(15, 23, 42, 0.48);
+            border: 1px solid #BFDBFE;
+            background: #EFF6FF;
             border-radius: 8px;
-            color: #E5E7EB;
+            color: #1F2937;
             font-size: 14px;
             line-height: 1.55;
         }
@@ -2215,14 +2221,14 @@ def _apply_industry_css() -> None:
             gap: 4px;
         }
         .recognition-panel strong {
-            color: #F8FAFC;
+            color: #111827;
         }
         .recognition-fallback {
-            border-color: rgba(251, 191, 36, 0.42);
-            background: rgba(113, 63, 18, 0.18);
+            border-color: #FDE68A;
+            background: #FFFBEB;
         }
         .market-meta-strip span {
-            color: #94A3B8;
+            color: #6B7280;
         }
         .driver-row {
             display: flex;
@@ -2230,7 +2236,7 @@ def _apply_industry_css() -> None:
             justify-content: space-between;
             gap: 12px;
             padding: 12px 0;
-            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            border-top: 1px solid #E5E7EB;
         }
         .driver-row:first-of-type {
             border-top: 0;
@@ -2245,9 +2251,9 @@ def _apply_industry_css() -> None:
         }
         .theme-chip {
             display: inline-flex;
-            border: 1px solid rgba(148, 163, 184, 0.24);
-            background: rgba(30, 41, 59, 0.78);
-            color: #E5E7EB;
+            border: 1px solid #BFDBFE;
+            background: #EFF6FF;
+            color: #1F2937;
             border-radius: 999px;
             padding: 7px 10px;
             font-size: 13px;
@@ -2258,8 +2264,8 @@ def _apply_industry_css() -> None:
             gap: 10px;
         }
         .chain-column {
-            background: rgba(30, 41, 59, 0.62);
-            border: 1px solid rgba(148, 163, 184, 0.18);
+            background: #FFFFFF;
+            border: 1px solid #D1D5DB;
             border-radius: 8px;
             padding: 12px;
         }
