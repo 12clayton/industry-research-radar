@@ -125,6 +125,28 @@ V5.3 增加当前数据状态显示，用于判断摘要基于什么时间的数
 * 数据新鲜度
 
 ---
+## Demo Screenshots / 项目截图
+
+### 行业雷达总览
+
+![行业雷达总览](docs/assets/行业雷达总览.png)
+
+### 单行业研究页
+
+![单行业研究页](docs/assets/单行业研究页.png)
+
+### 行业指标与催化框架
+
+![行业指标与催化框架](docs/assets/行业指标与催化框架.png)
+
+### AI 研究摘要页
+
+![AI研究摘要页](docs/assets/AI研究摘要页.png)
+
+### AI 研究 Prompt 导出
+
+![AI研究Prompt导出](docs/assets/AI研究Prompt导出.png)
+
 
 ## Project Structure / 项目结构
 
