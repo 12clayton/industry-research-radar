@@ -8,6 +8,7 @@ issuing trading instructions, or mutating catalyst frameworks.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -15,6 +16,7 @@ import streamlit as st
 
 from src.industry_ai_prompt_builder import build_ai_research_prompt, build_ai_research_prompt_filename
 from src.industry_catalyst_framework_store import get_effective_catalyst_framework
+from src.industry_data_status import build_industry_data_status, data_status_display_rows
 from src.industry_market_data import get_market_confirmation_data
 from src.industry_news_provider import read_industry_news
 from src.industry_trend_search import find_industry_trend
@@ -364,11 +366,21 @@ def render_research_agent_page(lang: str | None = None) -> None:
     market_result = get_market_confirmation_data(industry_id)
     catalyst = get_effective_catalyst_framework(industry_id)
     live_news = read_industry_news(industry_id)
+    local_summary_generated_at = datetime.now()
     summary = localize_research_summary(build_research_summary(industry, market_result, catalyst, live_news), lang)
     summary["industry_name"] = INDUSTRY_LABELS.get(industry_id, {}).get(lang, summary.get("industry_name"))
     if not summary["covered"]:
         st.info(text["not_covered"])
         return
+
+    data_status = build_industry_data_status(
+        industry=industry,
+        market_result=market_result,
+        live_news=live_news,
+        catalyst=catalyst,
+        local_summary_generated_at=local_summary_generated_at,
+    )
+    _render_data_status_bar(data_status)
 
     st.markdown(f"### {text['local_section_title']}")
     st.caption(text["local_section_note"])
@@ -400,6 +412,45 @@ def render_research_agent_page(lang: str | None = None) -> None:
 
     st.divider()
     _render_ai_prompt_package(text, summary, live_news, lang)
+
+
+def _render_data_status_bar(data_status: dict[str, Any]) -> None:
+    st.markdown("### 当前数据状态")
+    rows = data_status_display_rows(data_status)
+    row_map = dict(rows)
+    top_items = [
+        ("本地摘要", row_map.get("本地摘要生成时间", "暂无")),
+        ("市场价格", row_map.get("市场价格", "暂无")),
+        ("新闻缓存", row_map.get("新闻缓存", "暂无")),
+        ("数据状态", row_map.get("数据状态", "缺失")),
+    ]
+    cols = st.columns(4)
+    for col, (label, value) in zip(cols, top_items):
+        with col:
+            st.metric(label, value)
+
+    detail_items = [
+        ("最新新闻", row_map.get("最新新闻", "暂无")),
+        ("7天相关新闻数", row_map.get("7天相关新闻数", "0")),
+        ("高相关新闻数", row_map.get("高相关新闻数", "0")),
+        ("低相关新闻数", row_map.get("低相关新闻数", "0")),
+        ("催化快照", row_map.get("催化快照", "暂无")),
+        ("催化状态", row_map.get("催化状态", "暂无")),
+        ("证据强度", row_map.get("证据强度", "暂无")),
+        ("使用更新后框架", row_map.get("使用更新后框架", "否")),
+    ]
+    detail_cols = st.columns(4)
+    for index, (label, value) in enumerate(detail_items):
+        with detail_cols[index % 4]:
+            st.caption(label)
+            st.write(value)
+
+    warning = str(data_status.get("data_freshness_warning") or "")
+    if warning:
+        st.info(warning)
+    st.caption("刷新提示：请先在单行业搜索页面刷新新闻并生成/更新催化快照，再回到本页查看 V5.1 摘要和 V5.2 Prompt。")
+    with st.expander("查看完整数据状态", expanded=False):
+        st.dataframe(pd.DataFrame([{"字段": label, "状态": value} for label, value in rows]), width="stretch", hide_index=True)
 
 
 def _render_ai_prompt_package(
