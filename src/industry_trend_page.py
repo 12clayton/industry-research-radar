@@ -190,6 +190,21 @@ TEXT = {
     },
 }
 
+TEXT["zh"].update(
+    {
+        "page_title": "单行业研究页",
+        "page_subtitle": "查看单个行业的完整研究上下文：行业阶段、价格确认、新闻催化、催化主题、风险信号和产业链信息。单行业 Markdown 是原始行业上下文 / 证据包，不是 ChatGPT Prompt。",
+        "version": "AI 辅助行业研究雷达系统 · 单行业证据包",
+    }
+)
+TEXT["en"].update(
+    {
+        "page_title": "Single Industry Research",
+        "page_subtitle": "Review one industry's full context: stage, price confirmation, news catalysts, catalyst themes, risk signals, and industry-chain information. The single-industry Markdown is a raw context/evidence package, not a ChatGPT prompt.",
+        "version": "AI-Assisted Industry Research Radar · Single-Industry Evidence Package",
+    }
+)
+
 STATUS_COLORS = {
     "Strong Trend": "#22C55E",
     "Trend Intact": "#38BDF8",
@@ -591,10 +606,15 @@ def render_export_context(
 ) -> None:
     """Render local Markdown / JSON export controls."""
 
-    title = "导出分析上下文" if lang == "zh" else "Export Analysis Context"
-    md_label = "复制用 Markdown" if lang == "zh" else "Copy-ready Markdown"
-    md_download = "下载 Markdown" if lang == "zh" else "Download Markdown"
-    json_download = "下载 JSON" if lang == "zh" else "Download JSON"
+    title = "导出原始行业上下文 / 证据包" if lang == "zh" else "Export Raw Industry Context / Evidence Package"
+    md_label = "原始行业上下文 Markdown（不是 ChatGPT Prompt）" if lang == "zh" else "Raw industry context Markdown (not a ChatGPT prompt)"
+    md_download = "下载行业上下文 Markdown" if lang == "zh" else "Download Context Markdown"
+    json_download = "下载行业上下文 JSON" if lang == "zh" else "Download Context JSON"
+    note = (
+        "这里导出的是单行业原始上下文 / 证据包，用于保存页面材料或人工复核；V5.2 Prompt 是研究摘要页里给 ChatGPT 的任务书。"
+        if lang == "zh"
+        else "This export is the raw single-industry context/evidence package for saving or manual review. The V5.2 prompt on the research-summary page is the task brief for ChatGPT."
+    )
     catalyst_review = build_catalyst_review(
         str(industry.get("id", "")),
         catalyst,
@@ -625,6 +645,7 @@ def render_export_context(
     industry_id = str(industry.get("id", "industry"))
     today = pd.Timestamp.today().strftime("%Y-%m-%d")
     with st.expander(title, expanded=False):
+        st.caption(note)
         st.text_area(md_label, markdown_text, height=260)
         left, right = st.columns(2)
         with left:

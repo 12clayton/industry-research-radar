@@ -130,6 +130,7 @@ RESEARCH_AGENT_TEXT["zh"].update(
         "ai_prompt_button": "生成 ChatGPT 研究 Prompt",
         "ai_prompt_label": "ChatGPT 研究 Prompt / Markdown 输入包",
         "ai_download_label": "下载 Markdown",
+        "workflow_note": "工作流：数据状态 → V5.1 本地研究摘要 → V5.2 ChatGPT 研究输入包。V5.1 是本地规则版摘要，不是大模型输出；V5.2 不调用 API、不自动生成结论，只生成可复制给 ChatGPT 的结构化研究 Prompt；V5.3 数据状态栏用于判断当前摘要基于什么时间的数据。",
     }
 )
 RESEARCH_AGENT_TEXT["en"].update(
@@ -141,6 +142,7 @@ RESEARCH_AGENT_TEXT["en"].update(
         "ai_prompt_button": "Generate ChatGPT Research Prompt",
         "ai_prompt_label": "ChatGPT Research Prompt / Markdown Input Package",
         "ai_download_label": "Download Markdown",
+        "workflow_note": "Workflow: data status → V5.1 local research summary → V5.2 ChatGPT research input package. V5.1 is a local rule-based summary, not model output. V5.2 does not call APIs or auto-generate conclusions; it only creates a structured prompt for ChatGPT. V5.3 shows what data timestamp the current summary is based on.",
     }
 )
 
@@ -345,6 +347,7 @@ def render_research_agent_page(lang: str | None = None) -> None:
     text = RESEARCH_AGENT_TEXT[lang]
     st.markdown(f"## {text['view_title']}")
     st.caption(text["view_subtitle"])
+    st.info(text["workflow_note"])
 
     query = st.selectbox(
         text["industry_selector"],

@@ -263,6 +263,21 @@ RADAR_TEXT = {
     },
 }
 
+RADAR_TEXT["zh"].update(
+    {
+        "title": "行业雷达总览",
+        "subtitle": "横向观察多个行业的趋势评分、价格确认、新闻热度、催化状态、风险等级和人工复核建议。趋势评分只是行业初筛信号，不是买入建议。",
+        "load_note": "雷达页默认读取本地缓存；只有点击刷新按钮才会更新市场或新闻数据。请把这里当作行业初筛与对比入口，不要把单一分数当作投资结论。",
+    }
+)
+RADAR_TEXT["en"].update(
+    {
+        "title": "Industry Radar Overview",
+        "subtitle": "Compare industry trend scores, price confirmation, news heat, catalyst status, risk level, and manual-review signals. Trend scores are screening signals, not buy recommendations.",
+        "load_note": "The radar page reads local cache by default. Market or news data updates only when refresh buttons are clicked. Treat this page as an industry screening view, not an investment conclusion.",
+    }
+)
+
 
 def render_industry_radar_page(lang: str) -> None:
     """Render a cross-industry radar table."""

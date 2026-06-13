@@ -10,7 +10,7 @@ from src.industry_trend_page import render_industry_trend_search_page, render_la
 
 
 st.set_page_config(
-    page_title="Industry Trend Search Engine",
+    page_title="AI 辅助行业研究雷达系统",
     layout="wide",
 )
 
@@ -19,6 +19,19 @@ def main() -> None:
     """Render the standalone industry research views."""
 
     lang = render_language_picker()
+    product_intro = {
+        "zh": "本系统用于行业趋势初筛、新闻催化跟踪、风险识别和 AI 辅助研究复核。系统不提供直接买卖建议，所有输出仅供研究参考。",
+        "en": "This system supports industry screening, news catalyst tracking, risk identification, and AI-assisted research review. It does not provide direct buy/sell advice; all outputs are for research reference only.",
+    }
+    workflow = {
+        "zh": "核心流程：行业初筛 → 价格确认 → 新闻催化 → 风险识别 → 本地摘要 → AI 复核输入包",
+        "en": "Core workflow: industry screening → price confirmation → news catalysts → risk identification → local summary → AI review input package",
+    }
+    st.sidebar.markdown("### AI 辅助行业研究雷达系统")
+    st.sidebar.caption(product_intro[lang])
+    st.sidebar.caption(workflow[lang])
+    st.caption(product_intro[lang])
+    st.caption(workflow[lang])
     labels = {
         "zh": ("单行业搜索", "行业雷达总览", "研究摘要 / AI 备忘录"),
         "en": ("Single Industry Search", "Industry Radar Overview", "Research Summary / AI Memo"),
