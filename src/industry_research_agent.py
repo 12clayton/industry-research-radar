@@ -13,6 +13,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from src.industry_ai_prompt_builder import build_ai_research_prompt, build_ai_research_prompt_filename
 from src.industry_catalyst_framework_store import get_effective_catalyst_framework
 from src.industry_market_data import get_market_confirmation_data
 from src.industry_news_provider import read_industry_news
@@ -117,6 +118,29 @@ RESEARCH_AGENT_TEXT = {
         "none": "None",
     },
 }
+
+RESEARCH_AGENT_TEXT["zh"].update(
+    {
+        "view_title": "V5.1 本地研究摘要 / V5.2 AI 研究输入包",
+        "view_subtitle": "V5.1 是本地规则版研究摘要生成器，用于输出系统初判；V5.2 当前生成可复制给 ChatGPT 的 Markdown 研究输入包。",
+        "ai_section_title": "V5.2 AI 研究输入包",
+        "ai_disabled": "V5.2 当前为 AI 研究输入包生成器：系统会把本地摘要、价格确认、新闻证据、催化主线、风险信号和待验证问题整理成可复制给 ChatGPT 的 Prompt。当前不接 API，不自动生成结论。",
+        "ai_prompt_button": "生成 ChatGPT 研究 Prompt",
+        "ai_prompt_label": "ChatGPT 研究 Prompt / Markdown 输入包",
+        "ai_download_label": "下载 Markdown",
+    }
+)
+RESEARCH_AGENT_TEXT["en"].update(
+    {
+        "view_title": "V5.1 Local Research Summary / V5.2 AI Research Input Package",
+        "view_subtitle": "V5.1 is a local rule-based summary. V5.2 now builds a Markdown prompt package for manual ChatGPT research review.",
+        "ai_section_title": "V5.2 AI Research Input Package",
+        "ai_disabled": "V5.2 is currently an AI research input package generator: it organizes the local summary, price confirmation, news evidence, catalyst mainline, risk signals, and validation questions into a prompt that can be copied to ChatGPT. It does not connect to an API or auto-generate conclusions.",
+        "ai_prompt_button": "Generate ChatGPT Research Prompt",
+        "ai_prompt_label": "ChatGPT Research Prompt / Markdown Input Package",
+        "ai_download_label": "Download Markdown",
+    }
+)
 
 RESONANCE_NOTE_ZH = {
     "aligned": "价格确认与催化热度均较强，并且有中高相关度缓存新闻作为证据支持。",
@@ -341,6 +365,7 @@ def render_research_agent_page(lang: str | None = None) -> None:
     catalyst = get_effective_catalyst_framework(industry_id)
     live_news = read_industry_news(industry_id)
     summary = localize_research_summary(build_research_summary(industry, market_result, catalyst, live_news), lang)
+    summary["industry_name"] = INDUSTRY_LABELS.get(industry_id, {}).get(lang, summary.get("industry_name"))
     if not summary["covered"]:
         st.info(text["not_covered"])
         return
@@ -374,17 +399,36 @@ def render_research_agent_page(lang: str | None = None) -> None:
         st.dataframe(pd.DataFrame([summary["evidence"]]), width="stretch", hide_index=True)
 
     st.divider()
-    _render_ai_memo_placeholder(text)
+    _render_ai_prompt_package(text, summary, live_news, lang)
 
 
-def _render_ai_memo_placeholder(text: dict[str, Any]) -> None:
+def _render_ai_prompt_package(
+    text: dict[str, Any],
+    summary: dict[str, Any],
+    live_news: dict[str, Any],
+    lang: str,
+) -> None:
     st.markdown(f"### {text['ai_section_title']}")
     st.info(text["ai_disabled"])
-    st.caption(text["ai_placeholder_note"])
-    placeholder = text["ai_placeholder_value"]
-    for field in text["ai_memo_fields"]:
-        st.markdown(f"**{field}**")
-        st.write(placeholder)
+    if st.button(text["ai_prompt_button"], key=f"ai_prompt_generate_{summary.get('industry_id')}"):
+        st.session_state[f"ai_prompt_visible_{summary.get('industry_id')}"] = True
+
+    prompt = build_ai_research_prompt(summary=summary, live_news=live_news, lang=lang)
+    visible_key = f"ai_prompt_visible_{summary.get('industry_id')}"
+    if st.session_state.get(visible_key, True):
+        st.text_area(
+            text["ai_prompt_label"],
+            value=prompt,
+            height=520,
+            key=f"ai_research_prompt_{summary.get('industry_id')}_{lang}",
+        )
+        st.download_button(
+            text["ai_download_label"],
+            data=prompt,
+            file_name=build_ai_research_prompt_filename(str(summary.get("industry_id") or "")),
+            mime="text/markdown",
+            key=f"ai_research_prompt_download_{summary.get('industry_id')}_{lang}",
+        )
 
 
 def _trend_health(

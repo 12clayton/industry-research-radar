@@ -23,6 +23,8 @@ def main() -> None:
         "zh": ("单行业搜索", "行业雷达总览", "研究摘要 / AI 备忘录"),
         "en": ("Single Industry Search", "Industry Radar Overview", "Research Summary / AI Memo"),
     }
+    labels["zh"] = ("单行业搜索", "行业雷达总览", "研究摘要 / AI 输入包")
+    labels["en"] = ("Single Industry Search", "Industry Radar Overview", "Research Summary / AI Input Package")
     search_label, radar_label, research_label = labels[lang]
     selected_view = st.radio(
         "View",
